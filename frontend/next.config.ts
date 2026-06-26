@@ -32,15 +32,38 @@ const nextConfig: NextConfig = {
       };
     }
 
+    // Enhanced route-based code splitting with named chunks
     config.optimization = {
       ...config.optimization,
       splitChunks: {
         chunks: "all",
         minSize: 20000,
-        maxSize: 244000,
+        maxSize: 50000, // Target <50KB per chunk
         cacheGroups: {
           default: false,
           vendors: false,
+          // Route-specific chunks
+          dashboard: {
+            name: "route-dashboard",
+            chunks: "async",
+            test: /[\\/]app[\\/]dashboard[\\/]/,
+            priority: 60,
+            enforce: true,
+          },
+          auth: {
+            name: "route-auth",
+            chunks: "async",
+            test: /[\\/]app[\\/]auth[\\/]/,
+            priority: 60,
+            enforce: true,
+          },
+          forms: {
+            name: "route-forms",
+            chunks: "async",
+            test: /[\\/]app[\\/]forms[\\/]/,
+            priority: 60,
+            enforce: true,
+          },
           abi: {
             name: "abi",
             chunks: "async",
@@ -126,7 +149,7 @@ const nextConfig: NextConfig = {
           {
             key: "Link",
             value: [
-              "</fonts/inter-var.woff2>; rel=preload; as=font; type=\"font/woff2\"; crossorigin=anonymous; fetchpriority=high",
+              '</fonts/inter-var.woff2>; rel=preload; as=font; type="font/woff2"; crossorigin=anonymous; fetchpriority=high',
               "</_next/static/css/app/layout.css>; rel=preload; as=style",
             ].join(", "),
           },
