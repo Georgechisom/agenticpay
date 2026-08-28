@@ -56,6 +56,7 @@ pub enum DataKey {
     MultisigProposal(u64),
     HtlcCount,
     HtlcLock(u64),
+    EscrowPolicy(u64),
     BridgeConfig,
     V2(crate::storage::StorageKey),
 }

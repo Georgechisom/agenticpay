@@ -11,6 +11,7 @@ import {
   getContractTemplate,
   listContractTemplates,
   getContractStats,
+  resetContracts,
 } from '../contracts.js';
 import type { GenerateContractInput, ContractType } from '../contracts.js';
 
@@ -37,11 +38,8 @@ describe('Contracts Service', () => {
   };
 
   beforeEach(() => {
-    // Clear contracts map between tests
-    listContracts().forEach((c) => {
-      // @ts-ignore - accessing internal map for testing
-      contracts.delete(c.id);
-    });
+    // Clear contracts map between tests for isolation
+    resetContracts();
   });
 
   describe('generateContract', () => {

@@ -288,6 +288,10 @@ export function listContracts(): ContractRecord[] {
   return Array.from(contracts.values());
 }
 
+export function resetContracts(): void {
+  contracts.clear();
+}
+
 export function searchContracts(query: { projectId?: string; status?: string; type?: string }): ContractRecord[] {
   return listContracts().filter((c) => {
     if (query.projectId && c.projectId !== query.projectId) return false;

@@ -315,3 +315,171 @@ pub fn get_receipt_count(env: &Env) -> u64 {
         .get(&DataKey::ReceiptCount)
         .unwrap_or(0)
 }
+
+// ---------------------------------------------------------------------------
+// Configurable tiered multi-sig escrow threshold policies
+// ---------------------------------------------------------------------------
+
+/// A single threshold tier: amounts in `[min_amount, max_amount]` require
+/// exactly `required_signers` signers.  `None` on `max_amount` means "open
+/// upper bound" (i.e. anything >= `min_amount` until a higher policy matches
+/// or the default is used).
+#[contracttype]
+#[derive(Clone, Debug, PartialEq)]
+pub struct ThresholdPolicy {
+    pub min_amount: u64,
+    pub max_amount: Option<u64>,
+    pub required_signers: u32,
+}
+
+/// An ordered collection of threshold tiers plus a fallback default.
+///
+/// Policies **MUST** be sorted by `min_amount` ascending and must not overlap
+/// (`validate_threshold_policy` enforces this).
+#[contracttype]
+#[derive(Clone, Debug, PartialEq)]
+pub struct MultisigThresholdPolicy {
+    pub policies: Vec<ThresholdPolicy>,
+    pub default_threshold: u32,
+}
+
+/// Look up the required signer count for a given escrow `amount` against the
+/// provided `policy`.  Returns the `required_signers` from the first matching
+/// tier, or `default_threshold` if no tier covers the amount.
+pub fn get_required_signers(amount: u64, policy: &MultisigThresholdPolicy) -> u32 {
+    let len = policy.policies.len();
+    let mut i = 0u32;
+    while i < len {
+        let tier = policy.policies.get(i).expect("policy index out of range");
+        let matches = amount >= tier.min_amount
+            && match tier.max_amount {
+                Some(max) => amount <= max,
+                None => true,
+            };
+        if matches {
+            return tier.required_signers;
+        }
+        i += 1;
+    }
+    policy.default_threshold
+}
+
+/// Validate that a `MultisigThresholdPolicy` is well-formed:
+///
+/// 1. Policies are sorted by `min_amount` ascending.
+/// 2. No adjacent ranges overlap (i.e. the next policy's `min_amount` must be
+///    strictly greater than the previous policy's upper bound when present).
+/// 3. Every `required_signers` is at least 1.
+/// 4. `default_threshold` is at least 1.
+pub fn validate_threshold_policy(policy: &MultisigThresholdPolicy) -> bool {
+    if policy.default_threshold == 0 {
+        return false;
+    }
+
+    let len = policy.policies.len();
+    if len == 0 {
+        return true;
+    }
+
+    let mut i = 0u32;
+    while i < len {
+        let tier = policy.policies.get(i).expect("policy index out of range");
+
+        // threshold must be at least 1
+        if tier.required_signers == 0 {
+            return false;
+        }
+
+        // min_amount must be less than max_amount when both present
+        if let Some(max) = tier.max_amount {
+            if tier.min_amount > max {
+                return false;
+            }
+        }
+
+        // check adjacency: previous upper bound must not reach into this tier
+        if i > 0 {
+            let prev = policy.policies.get(i - 1).expect("policy index out of range");
+            // previous min must be strictly less (sorted ascending)
+            if prev.min_amount >= tier.min_amount {
+                return false;
+            }
+            // previous range must not overlap into this tier's range
+            if let Some(prev_max) = prev.max_amount {
+                if prev_max >= tier.min_amount {
+                    return false;
+                }
+            }
+        }
+
+        i += 1;
+    }
+
+    true
+}
+
+/// Determine the required signers from `policy` for the given `amount`, then
+/// create and store a new escrow project with that threshold baked in.
+///
+/// Returns the new project id.
+pub fn create_escrow_with_policy(
+    env: &Env,
+    client: Address,
+    freelancer: Address,
+    amount: i128,
+    description: String,
+    github_repo: String,
+    deadline: u64,
+    policy: MultisigThresholdPolicy,
+) -> u64 {
+    common::_require_not_paused(env);
+    client.require_auth();
+    common::_acquire_lock(env);
+
+    assert!(
+        validate_threshold_policy(&policy),
+        "Invalid threshold policy"
+    );
+
+    let unsigned_amount = amount.unsigned_abs() as u64;
+    let _signers = get_required_signers(unsigned_amount, &policy);
+
+    let mut count: u64 = env
+        .storage()
+        .instance()
+        .get(&DataKey::ProjectCount)
+        .unwrap_or(0);
+    count += 1;
+
+    let project = Project {
+        id: count,
+        client: client.clone(),
+        freelancer: freelancer.clone(),
+        amount,
+        deposited: 0,
+        status: ProjectStatus::Created,
+        github_repo,
+        description,
+        created_at: env.ledger().timestamp(),
+        deadline,
+    };
+
+    env.storage()
+        .persistent()
+        .set(&DataKey::Project(count), &project);
+    env.storage().instance().set(&DataKey::ProjectCount, &count);
+
+    // Persist the threshold policy keyed to the project so downstream
+    // multisig flows can enforce the correct signer count.
+    env.storage()
+        .persistent()
+        .set(&DataKey::EscrowPolicy(count), &policy);
+
+    env.events().publish(
+        (symbol_short!("project"), symbol_short!("created")),
+        (count, client, freelancer, amount),
+    );
+
+    common::_release_lock(env);
+    count
+}

@@ -82,7 +82,7 @@ describe('disputeAutomation', () => {
 
     it('recommends auto_resolve for high scores', () => {
       for (let i = 0; i < 3; i++) {
-        addEvidence('d1', 'transaction_proof', `https://example.com/${i}.png', 'Proof of transaction', 'user1');
+        addEvidence('d1', 'transaction_proof', `https://example.com/${i}.png`, 'Proof of transaction', 'user1');
       }
 
       const priority = computeDisputePriority(

@@ -28,6 +28,7 @@ export type ResolutionRecommendation =
 
 export interface DisputeEvidenceInput {
   id: string;
+  type: string;
   description: string;
   fileUrl?: string;
   fileName?: string;
@@ -35,7 +36,7 @@ export interface DisputeEvidenceInput {
   timestamp: string;
 }
 
-export type DisputeInput {
+export interface DisputeInput {
   id: string;
   description: string;
   category: DisputeCategory;
