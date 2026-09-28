@@ -55,6 +55,33 @@ import { auditRouter } from './routes/audit.js';
 import { hedgingRouter } from './routes/hedging.js';
 import { complianceRouter } from './routes/compliance.js';
 import { gdprRouter } from './routes/gdpr.js';
+import dataExportRouter from './routes/dataExport.js';
+import securityRouter from './routes/security.js';
+import commentsRouter from './routes/comments.js';
+import collaborationRouter from './routes/collaboration.js';
+import { paymentStrategiesRouter } from './routes/payment-strategies.js';
+import { registerDefaultPaymentProviders } from './services/payments/bootstrap.js';
+import { compressionMiddleware } from './middleware/compression.js';
+import { streamingExportRouter } from './routes/streaming-export.js';
+import { poolMonitorRouter } from './routes/pool-monitor.js';
+import { legacyRouter } from './routes/legacy.js';
+import { splitsRouter } from './routes/splits.js';
+import { refundsRouter } from './routes/refunds.js';
+import { databaseRouter } from './routes/database.js';
+import { archiveRouter } from './routes/archive.js';
+import { searchRouter } from './routes/search.js';
+import { zapierRouter } from './routes/zapier.js';
+import { intercomRouter } from './routes/intercom.js';
+import { allowancesRouter } from './routes/allowances.js';
+import { getPrismaReplicaClient } from './db/PrismaReplicaClient.js';
+import { cohortAnalyticsRouter } from './routes/cohort-analytics.js';
+import { churnPredictionRouter } from './routes/churn-prediction.js';
+import { slackRouter } from './routes/slack.js';
+import { githubIntegrationRouter } from './routes/github-integration.js';
+import { funnelTrackingRouter } from './routes/funnel-tracking.js';
+import { mlForecastRouter } from './routes/ml-forecast.js';
+import { abTestingRouter } from './routes/ab-testing.js';
+import { customerHealthRouter } from './routes/customer-health.js';
 import { kybRouter } from './routes/kyb.js';
 import { kycRouter } from './routes/kyc.js';
 import { batchRouter } from './routes/batch.js';
@@ -270,6 +297,41 @@ apiV1Router.use('/portfolio', portfolioRouter);
 apiV1Router.use('/backup', backupRouter);
 apiV1Router.use('/ip-allowlist', ipAllowlistRouter);
 apiV1Router.use('/push', pushRouter);
+// Stripe card payments
+apiV1Router.use('/stripe', stripeRouter);
+// Automated tax reporting, export, and calendar — Issues #690–#693
+apiV1Router.use('/tax-reporting', taxReportingRouter);
+// Cross-chain wallet abstraction & unified balance aggregation — Issue #711
+apiV1Router.use('/wallet', walletRouter);
+// GDPR data subject rights: erasure, portability, consent, retention — Issue #713
+apiV1Router.use('/gdpr', gdprRouter);
+// GDPR-aware data export jobs & scheduling — Issue #713
+apiV1Router.use('/data-export', dataExportRouter);
+// Automated security scanning findings & remediation tracking — Issue #712
+apiV1Router.use('/security', securityRouter);
+// Project collaboration: threaded comments, reactions, activity feed — Issue #714
+apiV1Router.use('/comments', commentsRouter);
+// Real-time collaboration: presence, field locks, edit history — Issue #714
+apiV1Router.use('/collaboration', collaborationRouter);
+// Multi-chain payment processing via the PaymentProvider strategy pattern — Issue #726
+apiV1Router.use('/payment-strategies', paymentStrategiesRouter);
+// Large dataset streaming exports
+apiV1Router.use('/exports', streamingExportRouter);
+// Performance and pool monitoring
+apiV1Router.use('/monitoring', poolMonitorRouter);
+apiV1Router.use('/database', databaseRouter);
+// Soft delete archival sweep + restore — Issue #884
+apiV1Router.use('/archive', archiveRouter);
+// Full-text search — Issue #885
+apiV1Router.use('/search', searchRouter);
+apiV1Router.use('/analytics/cohorts', cohortAnalyticsRouter);
+apiV1Router.use('/analytics/churn', churnPredictionRouter);
+apiV1Router.use('/integrations/slack', slackRouter);
+apiV1Router.use('/integrations/github', githubIntegrationRouter);
+apiV1Router.use('/funnels', funnelTrackingRouter);
+apiV1Router.use('/forecast/ml', mlForecastRouter);
+apiV1Router.use('/ab-tests', abTestingRouter);
+apiV1Router.use('/customer-health', customerHealthRouter);
 apiV1Router.use('/nfc', nfcRouter);
 apiV1Router.use('/cache', cacheRouter);
 apiV1Router.use('/circuit-breaker', circuitBreakerRouter);
