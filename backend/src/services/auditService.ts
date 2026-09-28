@@ -146,7 +146,10 @@ export class AuditService {
     if (typeof body !== 'object') return body;
     
     const sanitized = { ...body as Record<string, unknown> };
-    const sensitiveFields = ['password', 'token', 'apiKey', 'secret', 'creditCard', 'ssn'];
+    const sensitiveFields = [
+      'password', 'token', 'apiKey', 'secret', 'creditCard', 'ssn',
+      'documentNumber', 'fileContent', 'dateOfBirth',
+    ];
     
     for (const field of sensitiveFields) {
       if (field in sanitized) {

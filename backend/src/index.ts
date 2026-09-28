@@ -56,6 +56,7 @@ import { hedgingRouter } from './routes/hedging.js';
 import { complianceRouter } from './routes/compliance.js';
 import { gdprRouter } from './routes/gdpr.js';
 import { kybRouter } from './routes/kyb.js';
+import { kycRouter } from './routes/kyc.js';
 import { batchRouter } from './routes/batch.js';
 import { relayerRouter } from './routes/relayer.js';
 import { paymentQueueRouter } from './routes/payment-queue.js';
@@ -197,6 +198,8 @@ app.use(httpLogger);
 // Incoming webhooks: raw body capture before global JSON parser (#393)
 app.use('/webhooks', webhookHandlersRouter);
 
+// KYC document uploads carry base64 file contents (up to 10 MB decoded) (#921)
+app.use('/api/v1/kyc', express.json({ limit: '15mb' }));
 app.use(express.json());
 app.use(express.text({ type: ['text/csv', 'text/plain'] }));
 
@@ -249,6 +252,7 @@ apiV1Router.use('/flags', flagsRouter);
 apiV1Router.use('/rate-limit', rateLimitAnalyticsRouter);
 apiV1Router.use('/zk-identity', zkIdentityRouter);
 apiV1Router.use('/kyb', kybRouter);
+apiV1Router.use('/kyc', kycRouter);
 apiV1Router.use('/batch', batchRouter);
 apiV1Router.use('/relayer', relayerRouter);
 apiV1Router.use('/queue/payments', paymentQueueRouter);

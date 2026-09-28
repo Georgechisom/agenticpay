@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutDashboard, Folder, FileText, Wallet, Scale, Menu, X, QrCode } from 'lucide-react';
+import { LayoutDashboard, Folder, FileText, Wallet, Scale, Menu, X, QrCode, ShieldCheck } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -14,6 +14,7 @@ const navigation = [
   { name: 'Payments', href: '/dashboard/payments', icon: Wallet },
   { name: 'QR / NFC Pay', href: '/dashboard/payments/qr', icon: QrCode },
   { name: 'Disputes', href: '/dashboard/disputes', icon: Scale },
+  { name: 'Identity (KYC)', href: '/dashboard/kyc', icon: ShieldCheck },
 ];
 
 export function Sidebar() {
